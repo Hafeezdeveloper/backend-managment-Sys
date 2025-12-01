@@ -1,0 +1,40 @@
+{
+  "name": "managment",
+  "version": "1.0.0",
+  "description": "hrm",
+  "main": "index.js",
+  "scripts": {
+    "test": "run dev",
+    "dev": "nodemon index.js",
+    "seed": "node seeder/seeder.js",
+    "swagger": "node swagger/swagger.js"
+  },
+  "keywords": [
+    "managment"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "csvtojson": "^2.0.10",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "firebase-admin": "^13.5.0",
+    "jsonwebtoken": "^9.0.2",
+    "mailgen": "^2.0.30",
+    "mongoose": "^8.19.1",
+    "mongoose-to-swagger": "^1.5.1",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.9",
+    "nodemon": "^3.1.10",
+    "path": "^0.12.7",
+    "randomatic": "^3.1.1",
+    "socket.io": "^4.8.1",
+    "swagger-autogen": "^2.23.7",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "REST API",
+    "description": ""
+  },
+  "host": "localhost:3000",
+  "basePath": "/",
+  "schemes": ["http"],
+  "paths": {  
+    "/login": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": { "example": "any" },
+                "password": { "example": "any" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Bad Request" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/service-provider/register": {
+      "post": {
+        "summary": "Register a new Service Provider",
+        "description": "Creates a new service provider account",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string", "example": "Ali Raza" },
+                "username": { "type": "string", "example": "ali123" },
+                "email": { "type": "string", "example": "ali@gmail.com" },
+                "phone": { "type": "string", "example": "03001234567" },
+                "password": { "type": "string", "example": "Secret@123" },
+                "idDocumentType": { "type": "string", "enum": ["CNIC","PASSPORT","DRIVER_LICENSE"], "example": "CNIC" },
+                "cnicNumber": { "type": "string", "example": "42101-1234567-1" },
+                "passportNumber": { "type": "string", "example": "AB1234567" },
+                "driverLicenseNumber": { "type": "string", "example": "DL-918273" },
+                "serviceCategory": { "type": "string", "example": "Electrician" },
+                "keywords": { "type": "string", "example": "wiring, repair" },
+                "shortIntro": { "type": "string", "example": "5 years experience" },
+                "experience": { "type": "string", "example": "Home electrical work" },
+                "previousWork": { "type": "string", "example": "ABC Builders" },
+                "certifications": { "type": "string", "example": "PEC Certified" },
+                "availability": { "type": "string", "example": "Full-time" },
+                "serviceArea": { "type": "string", "example": "Karachi" },
+                "profilePhoto": { "type": "string", "example": "url-to-photo" },
+                "additionalNotes": { "type": "string", "example": "Available on Sundays" }
+              }
+            }
+          }
+        ],
+   "responses": {
+      "200": {
+        "description": "Register successful",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": { "type": "boolean", "example": true },
+            "message": { "type": "string", "example": "Register successful" },
+            "token": { "type": "string", "example": "jwt_token_here" },
+            "user": { "type": "object" }
+          }
+        }
+      },
+      "400": {
+        "description": "Bad Request / Service Provider already exists",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "success": { "type": "boolean", "example": false },
+            "message": { "type": "string", "example": "Service Provider with this email already exists" },
+            "error": { "type": "string", "example": null },
+            "status": { "type": "integer", "example": 400 }
+          }
+        }
+    }
+      }
+    }
+  }
+}
+}
