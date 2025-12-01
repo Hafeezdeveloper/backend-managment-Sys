@@ -58,7 +58,9 @@ AuthRouter.post("/service-provider/register", async (req, res) => {
       email,
     });
     if (serviceProvider) {
-     return failureHandler(400, "Service Provider with this email already exists")
+     return res
+       .status(400)
+       .json(failureHandler(400, "Service Provider with this email already exists"));
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     console.log("hashedPassword", hashedPassword);
@@ -78,23 +80,85 @@ AuthRouter.post("/service-provider/register", async (req, res) => {
 
 
 
-    return successHandler(201, "Service Provider registered successfully", {
-      token,
-      user: {
-        _id: newServiceProvider._id,
-        username: newServiceProvider.username,
-        email: newServiceProvider.email,
-        name: newServiceProvider.name,
-        status: newServiceProvider.status,
-      },
-    });
+    return res.status(201).json(
+      successHandler(
+        201,
+        {
+          token,
+          user: {
+            _id: newServiceProvider._id,
+            username: newServiceProvider.username,
+            email: newServiceProvider.email,
+            name: newServiceProvider.name,
+            status: newServiceProvider.status,
+          },
+        },
+        "Service Provider registered successfully"
+      )
+    );
   } catch (error) {
     console.error("Admin login error:", error);
     return res.status(400).json(failureHandler(400, error.message || "Invalid input"));
   }
 });
 
+// Service Provider login
+AuthRouter.post("/service-provider/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    console.log("Service Provider login attempt:", email);
 
+    const serviceProvider = await ServiceProviderModel.findOne({
+      email,
+    });
 
+    if (
+      !serviceProvider ||
+      !(await bcrypt.compare(password, serviceProvider.password))
+    ) {
+      return res.status(401).json(
+        failureHandler(401, "Email or password is incorrect")
+      );
+    }
+
+    if (serviceProvider.status !== "approved") {
+      return res.status(403).json(
+        failureHandler(403, "Your account is not active or pending approval")
+      );
+    }
+
+    const token = jwt.sign(
+      {
+        id: serviceProvider._id,
+        email: serviceProvider.email,
+        username: serviceProvider.username,
+        name: serviceProvider.name,
+        type: "serviceProvider",
+      },
+      process.env.SECURE_KEY,
+      { expiresIn: "7d" }
+    );
+
+    return res.json(
+      successHandler(200, {
+        token,
+        user: {
+          _id: serviceProvider._id,
+          username: serviceProvider.username,
+          email: serviceProvider.email,
+          name: serviceProvider.name,
+          status: serviceProvider.status,
+          serviceCategory: serviceProvider.serviceCategory,
+          phone: serviceProvider.phone,
+        },
+      }, "Login successful")
+    );
+  } catch (error) {
+    console.error("Service provider login error:", error);
+    return res.status(400).json(
+      failureHandler(400, error.message || "Invalid input")
+    );
+  }
+});
 
 module.exports = AuthRouter;
