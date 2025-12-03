@@ -7,6 +7,7 @@ const dotenv = require("dotenv");
 const bcrypt = require("bcrypt");
 const ServiceProviderModel = require("../models/serviceProvider.schema");
 const ResidentModel = require("../models/resident.schema");
+const { RoleEnum } = require("../utlits/Constants");
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ AuthRouter.post("/login", async (req, res) => {
         email: admin.email,
         name: admin.name,
         isSuperAdmin: true,
+        role: admin.role,
       },
     });
   } catch (error) {
@@ -59,9 +61,9 @@ AuthRouter.post("/service-provider/register", async (req, res) => {
       email,
     });
     if (serviceProvider) {
-     return res
-       .status(400)
-       .json(failureHandler(400, "Service Provider with this email already exists"));
+      return res
+        .status(400)
+        .json(failureHandler(400, "Service Provider with this email already exists"));
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     console.log("hashedPassword", hashedPassword);
@@ -74,7 +76,10 @@ AuthRouter.post("/service-provider/register", async (req, res) => {
     await newServiceProvider.save();
 
     const token = jwt.sign(
-      { id: newServiceProvider._id, email: newServiceProvider.email, username: newServiceProvider.username, name: newServiceProvider.name },
+      {
+        id: newServiceProvider._id, email: newServiceProvider.email,
+        username: newServiceProvider.username, name: newServiceProvider.name, role: RoleEnum.SERVICE_PROVIDER
+      },
       process.env.SECURE_KEY,
       { expiresIn: "7d" }
     );
@@ -151,6 +156,7 @@ AuthRouter.post("/service-provider/login", async (req, res) => {
           status: serviceProvider.status,
           serviceCategory: serviceProvider.serviceCategory,
           phone: serviceProvider.phone,
+          role: RoleEnum.SERVICE_PROVIDER,
         },
       }, "Login successful")
     );
@@ -219,6 +225,7 @@ AuthRouter.post("/resident/register", async (req, res) => {
             apartment: newResident.apartment,
             status: newResident.status,
             approvalStatus: newResident.approvalStatus,
+            role: RoleEnum.RESIDENT,
           },
         },
         "Registration successful"
@@ -226,7 +233,7 @@ AuthRouter.post("/resident/register", async (req, res) => {
     );
   } catch (error) {
     console.error("Resident registration error:", error);
-    
+
     // Handle duplicate key errors
     if (error.code === 11000) {
       const field = Object.keys(error.keyPattern)[0];
@@ -297,6 +304,7 @@ AuthRouter.post("/resident/login", async (req, res) => {
           username: resident.username,
           status: resident.status,
           approvalStatus: resident.approvalStatus,
+          role: RoleEnum.RESIDENT,
         },
       }, "Login successful")
     );

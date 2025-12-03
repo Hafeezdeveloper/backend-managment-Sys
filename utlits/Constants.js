@@ -1,7 +1,8 @@
 // roleEnum.js
 const RoleEnum = Object.freeze({
   ADMIN: 'admin',
-  SUPER_ADMIN: 'superadmin',
+  SUPER_ADMIN: 'superAdmin',
+  SERVICE_PROVIDER: 'serviceProvider',
 });
 
 const ActiveStatusEnum = Object.freeze({

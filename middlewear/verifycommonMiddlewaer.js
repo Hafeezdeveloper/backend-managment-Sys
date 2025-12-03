@@ -17,9 +17,9 @@ const authenticateToken = async (req, res, next) => {
         failureHandler(401, "No token provided")
       );
     }
-
     // Verify token
     const decoded = jwt.verify(token, process.env.SECURE_KEY);
+    console.log("decoded", decoded);
     
     // Determine user type (admin tokens don't have type field)
     const userType = decoded.type || "admin";
@@ -28,7 +28,8 @@ const authenticateToken = async (req, res, next) => {
     let collection = {
         "serviceProvider": ServiceProviderModel,
         "resident": ResidentModel,
-        "admin": AdminModel
+        "admin": AdminModel,
+        "superAdmin": AdminModel,
     };
     
     let user = await collection[userType].findById(userId);
