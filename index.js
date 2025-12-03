@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const morgan = require("morgan");
 const AuthRouter = require("./routes/auth");
+const ResidentRouter = require("./routes/resident");
 const app = express();
 // Load env variables
 dotenv.config();
@@ -29,7 +30,8 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerFile));
 app.get("/", (req, res) => {
     res.send("Server is running successfully 🚀");
 });
-app.use("/api/v1/admin", AuthRouter)
+app.use("/api/v1/admin", AuthRouter);
+app.use("/api/v1/admin/resident", ResidentRouter);
 
 
 // Port setup

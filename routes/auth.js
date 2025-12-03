@@ -6,6 +6,7 @@ const AuthRouter = express.Router();
 const dotenv = require("dotenv");
 const bcrypt = require("bcrypt");
 const ServiceProviderModel = require("../models/serviceProvider.schema");
+const ResidentModel = require("../models/resident.schema");
 
 dotenv.config();
 
@@ -21,7 +22,7 @@ AuthRouter.post("/login", async (req, res) => {
     });
 
     if (!admin || !(await bcrypt.compare(password, admin.password))) {
-      return res.status(401).json(failureHandler(401, "Username or password is incorrect"));
+      return res.status(401).json(failureHandler(401, "Username or password is incorrec t"));
     }
 
     const token = jwt.sign(
@@ -155,6 +156,152 @@ AuthRouter.post("/service-provider/login", async (req, res) => {
     );
   } catch (error) {
     console.error("Service provider login error:", error);
+    return res.status(400).json(
+      failureHandler(400, error.message || "Invalid input")
+    );
+  }
+});
+
+// Resident registration
+AuthRouter.post("/resident/register", async (req, res) => {
+  try {
+    const { email, apartment, username, password } = req.body;
+    console.log("Resident registration attempt:", email);
+
+    // Check if email, apartment, or username already exists
+    const existingResident = await ResidentModel.findOne({
+      $or: [
+        { email },
+        { apartment },
+        ...(username ? [{ username }] : []),
+      ],
+    });
+
+    if (existingResident) {
+      let message = "Resident already exists";
+      if (existingResident.email === email) {
+        message = "Email is already registered";
+      } else if (existingResident.apartment === apartment) {
+        message = "Apartment is already registered";
+      } else if (username && existingResident.username === username) {
+        message = "Username is already taken";
+      }
+
+      return res.status(400).json(
+        failureHandler(400, message)
+      );
+    }
+
+    // Hash password if provided
+    let hashedPassword = null;
+    if (password) {
+      hashedPassword = await bcrypt.hash(password, 10);
+    }
+
+    // Create resident
+    const newResident = new ResidentModel({
+      ...req.body,
+      password: hashedPassword,
+      approvalStatus: "PENDING",
+      status: "Pending",
+    });
+
+    await newResident.save();
+
+    return res.status(201).json(
+      successHandler(
+        201,
+        {
+          resident: {
+            _id: newResident._id,
+            name: newResident.name,
+            email: newResident.email,
+            apartment: newResident.apartment,
+            status: newResident.status,
+            approvalStatus: newResident.approvalStatus,
+          },
+        },
+        "Registration successful"
+      )
+    );
+  } catch (error) {
+    console.error("Resident registration error:", error);
+    
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json(
+        failureHandler(400, `${field.charAt(0).toUpperCase() + field.slice(1)} is already registered`)
+      );
+    }
+
+    return res.status(400).json(
+      failureHandler(400, error.message || "Invalid input")
+    );
+  }
+});
+
+// Resident login
+AuthRouter.post("/resident/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    console.log("Resident login attempt:", email);
+
+    const resident = await ResidentModel.findOne({
+      email,
+    });
+
+    if (
+      !resident ||
+      !resident.password ||
+      !(await bcrypt.compare(password, resident.password))
+    ) {
+      return res.status(401).json(
+        failureHandler(401, "Email or password is incorrect")
+      );
+    }
+
+    console.log("Resident status:", resident.status);
+
+    if (resident.status !== "Active") {
+      return res.status(403).json(
+        failureHandler(403, "Your account is not active")
+      );
+    }
+
+    if (resident.approvalStatus !== "APPROVED") {
+      return res.status(403).json(
+        failureHandler(403, "Your account is pending approval")
+      );
+    }
+
+    const token = jwt.sign(
+      {
+        id: resident._id,
+        type: "resident",
+        email: resident.email,
+      },
+      process.env.SECURE_KEY,
+      { expiresIn: "7d" }
+    );
+
+    return res.json(
+      successHandler(200, {
+        token,
+        user: {
+          _id: resident._id,
+          name: resident.name,
+          email: resident.email,
+          apartment: resident.apartment,
+          phone: resident.phone,
+          username: resident.username,
+          status: resident.status,
+          approvalStatus: resident.approvalStatus,
+        },
+      }, "Login successful")
+    );
+  } catch (error) {
+    console.error("Resident login error:", error);
     return res.status(400).json(
       failureHandler(400, error.message || "Invalid input")
     );
