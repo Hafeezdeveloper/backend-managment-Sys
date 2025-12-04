@@ -103,7 +103,7 @@ serviceProviders.put("/:id/approval", authenticateToken, adminOnly, async (req, 
     try {
         const serviceProviderId = req.params.id;
         const { status } = req.body;
-
+        console.log("status", status);
         if (!["approved", "rejected"].includes(status)) {
             return res.status(400).json(
                 failureHandler(400, "Status must be 'approved' or 'rejected'")

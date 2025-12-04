@@ -5,23 +5,6 @@ const { successHandler, failureHandler } = require("../utlits/helper/helper");
 
 const ResidentRouter = express.Router();
 
-/**
- * @route GET /resident
- * @summary Get all residents with pagination, search, and filtering
- * @description Get all residents with pagination, search, and filtering (Admin only). Supports searching by name, email, apartment, or phone. Can filter by status and sort by any field.
- * @group Residents - Resident management endpoints
- * @param {number} page.query - Page number for pagination (default: 1)
- * @param {number} limit.query - Number of items per page (default: 10)
- * @param {string} search.query - Search term for name, email, apartment, or phone
- * @param {string} status.query - Filter by status (e.g., "Active", "Pending")
- * @param {string} sort.query - Field to sort by (default: "createdAt")
- * @param {string} order.query - Sort order: "asc" or "desc" (default: "desc")
- * @param {string} Authorization.header.required - Bearer token for authentication
- * @response 200 - Success response with residents list and pagination info
- * @response 401 - Unauthorized - Invalid or missing token
- * @response 403 - Forbidden - Not an admin user
- * @response 500 - Internal server error
- */
 // Get all residents (Admin only)
 ResidentRouter.get("/", authenticateToken, adminOnly, async (req, res) => {
   try {
@@ -110,6 +93,87 @@ ResidentRouter.get("/", authenticateToken, adminOnly, async (req, res) => {
     );
   }
 });
+// Approve / Reject Resident (Admin Only)
+ResidentRouter.put(
+  "/:id/approval",
+  authenticateToken,
+  adminOnly,
+  async (req, res) => {
+    try {
+      const residentId = req.params.id;
+      const { approvalStatus } = req.body;
+
+      // ✅ Validate approval status
+      if (!["approved", "rejected"].includes(approvalStatus)) {
+        return res.status(400).json(
+          failureHandler(400, "Approval status must be approved or rejected")
+        );
+      }
+
+      // ✅ Find & Update Resident
+      const updatedResident = await ResidentModel.findByIdAndUpdate(
+        residentId,
+        {
+          approvalStatus,
+          status: approvalStatus === "approved" ? "active" : "rejected",
+        },
+        { new: true }
+      ).select("name apartment email status approvalStatus");
+
+      if (!updatedResident) {
+        return res.status(404).json(
+          failureHandler(404, "Resident not found")
+        );
+      }
+
+      return res.json(
+        successHandler(
+          200,
+          updatedResident,
+          `Resident ${approvalStatus.toLowerCase()} successfully`
+        )
+      );
+    } catch (error) {
+      console.error("Approve resident error:", error);
+      return res.status(500).json(
+        failureHandler(500, "Failed to update approval status")
+      );
+    }
+  }
+);
+
+// Delete Resident (Admin Only)
+ResidentRouter.delete(
+  "/:id",
+  authenticateToken,
+  adminOnly,
+  async (req, res) => {
+    try {
+      const residentId = req.params.id;
+
+      // ✅ Check if resident exists
+      const resident = await ResidentModel.findById(residentId);
+
+      if (!resident) {
+        return res.status(404).json(
+          failureHandler(404, "Resident not found")
+        );
+      }
+
+      // ✅ Delete Resident
+      await ResidentModel.findByIdAndDelete(residentId);
+
+      return res.json(
+        successHandler(200, null, "Resident deleted successfully")
+      );
+    } catch (error) {
+      console.error("Delete resident error:", error);
+      return res.status(500).json(
+        failureHandler(500, "Failed to delete resident")
+      );
+    }
+  }
+);
 
 module.exports = ResidentRouter;
 

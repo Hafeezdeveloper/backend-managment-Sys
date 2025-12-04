@@ -270,13 +270,13 @@ AuthRouter.post("/resident/login", async (req, res) => {
 
     console.log("Resident status:", resident.status);
 
-    if (resident.status !== "Active") {
+    if (resident.status !== "active") {
       return res.status(403).json(
         failureHandler(403, "Your account is not active")
       );
     }
 
-    if (resident.approvalStatus !== "APPROVED") {
+    if (resident.approvalStatus !== "approved") {
       return res.status(403).json(
         failureHandler(403, "Your account is pending approval")
       );

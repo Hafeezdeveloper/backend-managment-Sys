@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
 
 const IdDocumentType = ["CNIC", "PASSPORT", "DRIVER_LICENSE"];
-const OwnershipType = ["OWNER", "TENANT", "RENTED"];
-const ResidentStatus = ["Pending", "Active", "Inactive"];
-const ApprovalStatus = ["PENDING", "APPROVED", "REJECTED"];
+const OwnershipType = ["owner", "tenant", "rented"];
+const ResidentStatus = ["pending", "active", "inactive"];
+const ApprovalStatus = ["pending", "approved", "rejected"];
 
 const ResidentSchema = new mongoose.Schema(
   {
@@ -11,12 +11,12 @@ const ResidentSchema = new mongoose.Schema(
     apartment: { type: String, required: true, unique: true },
     phone: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    status: { type: String, enum: ResidentStatus, default: "Active" },
+    status: { type: String, enum: ResidentStatus, default: "active" },
     joinDate: { type: Date, default: Date.now },
     familyMembers: { type: Number, default: 1, min: 1 },
     username: { type: String, unique: true, sparse: true },
     password: { type: String, default: null },
-    approvalStatus: { type: String, enum: ApprovalStatus, default: "PENDING" },
+    approvalStatus: { type: String, enum: ApprovalStatus, default: "pending" },
     appliedDate: { type: Date, default: Date.now },
 
     // KYC Information

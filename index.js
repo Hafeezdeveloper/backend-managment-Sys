@@ -20,6 +20,7 @@ app.use(morgan("dev"));
 const swaggerUi = require("swagger-ui-express");
 const swaggerFile = require("./swagger/swagger-output.json");
 const serviceProviders = require("./routes/service-providers");
+const maintenanceRouter = require("./routes/maintanance");
 
 // Override host + basePath dynamically
 swaggerFile.host = "localhost:5000";
@@ -34,6 +35,7 @@ app.get("/", (req, res) => {
 app.use("/api/v1/admin", AuthRouter);
 app.use("/api/v1/admin/resident", ResidentRouter);
 app.use("/api/v1/admin/service-providers", serviceProviders);
+app.use("/api/v1/admin/maintenance", maintenanceRouter);
 
 
 // Port setup
