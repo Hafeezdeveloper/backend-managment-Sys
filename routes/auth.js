@@ -8,6 +8,7 @@ const bcrypt = require("bcrypt");
 const ServiceProviderModel = require("../models/serviceProvider.schema");
 const ResidentModel = require("../models/resident.schema");
 const { RoleEnum } = require("../utlits/Constants");
+const { addToBlacklist } = require("../utlits/tokenBlacklist");
 
 dotenv.config();
 
@@ -312,6 +313,47 @@ AuthRouter.post("/resident/login", async (req, res) => {
     console.error("Resident login error:", error);
     return res.status(400).json(
       failureHandler(400, error.message || "Invalid input")
+    );
+  }
+});
+
+// Logout endpoint (Admin, Service Provider, Resident)
+AuthRouter.post("/logout", async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    
+    if (!authHeader) {
+      return res.status(401).json(
+        failureHandler(401, "No authorization header provided")
+      );
+    }
+
+    // Extract token
+    let token;
+    if (authHeader.startsWith("Bearer ") || authHeader.startsWith("bearer ")) {
+      token = authHeader.split(" ")[1];
+    } else {
+      token = authHeader;
+    }
+
+    token = token?.trim();
+
+    if (!token) {
+      return res.status(401).json(
+        failureHandler(401, "No token provided")
+      );
+    }
+
+    // Add token to blacklist
+    addToBlacklist(token);
+
+    return res.json(
+      successHandler(200, {}, "Logout successful. Please remove token from client storage.")
+    );
+  } catch (error) {
+    console.error("Logout error:", error);
+    return res.status(500).json(
+      failureHandler(500, "Failed to logout")
     );
   }
 });

@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const BillStatus = ["PENDING", "PAID", "OVERDUE", "CANCELLED"];
+const BillStatus = ["pending", "paid", "overdue", "cancelled"]; 
 
 const BillItemSchema = new mongoose.Schema(
   {
@@ -14,15 +14,15 @@ const MaintenanceBillSchema = new mongoose.Schema(
   {
     residentId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Resident",
+      ref:"Resident",
       required: true,
     },
     month: { type: String, required: true },
     year: { type: Number, required: true },
     amount: { type: Number, required: true, min: 0 },
     dueDate: { type: Date, required: true },
-    status: { type: String, enum: BillStatus, default: "PENDING" },
-    generatedDate: { type: Date, default: Date.now },
+    status: { type: String, enum: BillStatus, default: "pending" },
+    generatedDate: { type: Date, default: Date.now }, 
     paidDate: { type: Date, default: null },
     items: [BillItemSchema],
   },

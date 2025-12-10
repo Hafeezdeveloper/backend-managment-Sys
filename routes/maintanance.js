@@ -185,16 +185,16 @@ maintenanceRouter.post(
       if (residentIds && Array.isArray(residentIds) && residentIds.length > 0) {
         residents = await ResidentModel.find({
           _id: { $in: residentIds },
-          status: "Active",
-          approvalStatus: "APPROVED",
+          status: "active",
+          approvalStatus: "approved",
         })
           .select("_id name apartment")
           .lean();
       } else {
         // Generate for all active residents
         residents = await ResidentModel.find({
-          status: "Active",
-          approvalStatus: "APPROVED",
+          status: "active",
+          approvalStatus: "approved",
         })
           .select("_id name apartment")
           .lean();
@@ -235,7 +235,7 @@ maintenanceRouter.post(
             year: year,
             amount: amount,
             dueDate: dueDateObj,
-            status: "PENDING",
+            status: "pending",
             items: items,
           });
 
@@ -283,7 +283,7 @@ maintenanceRouter.post(
 );
 
 // Update bill status (Admin only) – schema ke mutabiq, Prisma waale flow jaisa
-maintenanceRouter.patch(
+maintenanceRouter.put(
   "/:id/status",
   authenticateToken,
   adminOnly,
@@ -291,7 +291,7 @@ maintenanceRouter.patch(
     try {
       const billId = req.params.id;
       const { status, paidDate } = req.body;
-
+      console.log("status", status, "paidDate", billId);
       const bill = await MaintenanceBillModel.findById(billId);
 
       if (!bill) {
@@ -445,5 +445,55 @@ maintenanceRouter.put(
   }
 );
 
-module.exports = maintenanceRouter;
+maintenanceRouter.get(
+  "/resident/:residentId",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const residentId = parseInt(req.params.residentId);
 
+      // Check if resident can access these bills
+     
+
+      const bills = await MaintenanceBillModel.find({
+        where: { residentId },
+        include: {
+          items: true,
+          resident: {
+            select: { name: true, apartment: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      // Calculate statistics
+      const totalOutstanding = bills
+        .filter((b) => b.status === "pending")
+        .reduce((sum, bill) => sum + bill.amount, 0);
+
+      const overdueBills = bills.filter(
+        (b) => b.status === "pending" && new Date(b.dueDate) < new Date(),
+      );
+
+      const paidThisMonth = bills.filter((b) => {
+        if (b.status !== "paid" || !b.paidDate) return false;
+        const paidDate = new Date(b.paidDate);
+        const now = new Date();
+        return (
+          paidDate.getMonth() === now.getMonth() &&
+          paidDate.getFullYear() === now.getFullYear()
+        );
+      });
+      return res.json(successHandler(200,
+        {
+          bills,
+          statistics: { totalOutstanding, overdueBills: overdueBills.length, paidThisMonth: paidThisMonth.length, totalBills: bills.length },
+        }, "Bills fetched successfully"));
+    } catch (error) {
+      console.error("Get resident bills error:", error);
+      return res.status(500).json(failureHandler(500, "Failed to fetch bills"));
+    }
+  }
+);
+
+module.exports = maintenanceRouter;
