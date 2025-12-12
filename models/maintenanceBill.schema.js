@@ -25,6 +25,9 @@ const MaintenanceBillSchema = new mongoose.Schema(
     generatedDate: { type: Date, default: Date.now }, 
     paidDate: { type: Date, default: null },
     items: [BillItemSchema],
+    type: {
+      type: String,
+    },
   },
   {
     timestamps: true,

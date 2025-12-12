@@ -7,6 +7,7 @@ const {
   adminOrResident,
 } = require("../middlewear/verifycommonMiddlewaer");
 const { successHandler, failureHandler } = require("../utlits/helper/helper");
+const { default: mongoose } = require("mongoose");
 
 const maintenanceRouter = express.Router();
 
@@ -315,6 +316,7 @@ maintenanceRouter.put(
         updateData.status = status;
         if (status === "paid") {
           updateData.paidDate = new Date();
+          updateData.type = "approved"
         }
       }
 
@@ -396,7 +398,7 @@ maintenanceRouter.put(
       let message;
 
       if (req.user.type === "admin") {
-        updateData.status = "PAID";
+        updateData.status = "paid";
         updateData.paidDate = new Date();
         message = "Bill marked as paid successfully";
       } else {
@@ -445,27 +447,139 @@ maintenanceRouter.put(
   }
 );
 
+maintenanceRouter.put(
+  "/:id/request-resident-for-bill",
+  authenticateToken,
+  adminOrResident,
+  async (req, res) => {
+    try {
+      const billId = req.params.id;
+
+      const bill = await MaintenanceBillModel.findById(billId)
+        .populate("residentId", "name apartment")
+        .lean();
+
+      if (!bill) {
+        return res.status(404).json(
+          failureHandler(404, "Maintenance bill does not exist")
+        );
+      }
+
+
+
+      if (bill.status === "paid") {
+        return res.status(400).json(
+          failureHandler(
+            400,
+            "This bill has already been marked as paid"
+          )
+        );
+      }
+
+
+      let updatedBill = await MaintenanceBillModel.findByIdAndUpdate(
+        billId,
+        {
+          $set: { type: "request" }
+        },
+        {
+          new: true
+        }
+      )
+
+
+      return res.json(
+        successHandler(
+          200,
+          updatedBill,
+          message = "Request send to an admin for bill paid"
+        )
+      );
+    } catch (error) {
+      console.error("Mark bill as paid error:", error);
+      return res.status(500).json(
+        failureHandler(
+          500,
+          "Failed to process payment"
+        )
+      );
+    }
+  }
+);
+
+maintenanceRouter.put(
+  "/:id/request-resident-for-declined-bill",
+  authenticateToken,
+  adminOrResident,
+  async (req, res) => {
+    try {
+      const billId = req.params.id;
+
+      const bill = await MaintenanceBillModel.findById(billId)
+        .populate("residentId", "name apartment")
+        .lean();
+
+      if (!bill) {
+        return res.status(404).json(
+          failureHandler(404, "Maintenance bill does not exist")
+        );
+      }
+
+
+
+      if (bill.status === "paid") {
+        return res.status(400).json(
+          failureHandler(
+            400,
+            "This bill has already been marked as paid"
+          )
+        );
+      }
+
+
+      let updatedBill = await MaintenanceBillModel.findByIdAndUpdate(
+        billId,
+        {
+          $set: { type: null, status: "pending" }
+        },
+        {
+          new: true
+        }
+      )
+
+
+      return res.json(
+        successHandler(
+          200,
+          updatedBill,
+          message = "Request send to an admin for bill paid"
+        )
+      );
+    } catch (error) {
+      console.error("Mark bill as paid error:", error);
+      return res.status(500).json(
+        failureHandler(
+          500,
+          "Failed to process payment"
+        )
+      );
+    }
+  }
+);
+
 maintenanceRouter.get(
   "/resident/:residentId",
   authenticateToken,
   async (req, res) => {
     try {
-      const residentId = parseInt(req.params.residentId);
-
+      let residentId = req.params.residentId
       // Check if resident can access these bills
-     
 
       const bills = await MaintenanceBillModel.find({
-        where: { residentId },
-        include: {
-          items: true,
-          resident: {
-            select: { name: true, apartment: true },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      });
+        residentId: new mongoose.Types.ObjectId(residentId)
+      }).sort({ createdAt: -1 });
 
+      console.log(bills)
       // Calculate statistics
       const totalOutstanding = bills
         .filter((b) => b.status === "pending")

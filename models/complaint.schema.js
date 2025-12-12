@@ -44,6 +44,7 @@ const ComplaintSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+   
   },
   {
     timestamps: true, // This creates createdAt and updatedAt automatically
