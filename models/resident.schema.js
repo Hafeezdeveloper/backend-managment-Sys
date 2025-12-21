@@ -24,7 +24,7 @@ const ResidentSchema = new mongoose.Schema(
     passportNumber: { type: String, default: null },
     driverLicenseNumber: { type: String, default: null },
     idDocumentType: { type: String, enum: IdDocumentType, default: "CNIC" },
-    ownershipType: { type: String, enum: OwnershipType, default: "OWNER" },
+    ownershipType: { type: String, enum: OwnershipType, default: "owner" },
     emergencyContact: { type: String, default: null },
     emergencyContactPhone: { type: String, default: null },
     occupation: { type: String, default: null },

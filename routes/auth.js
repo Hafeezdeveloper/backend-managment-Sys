@@ -209,8 +209,8 @@ AuthRouter.post("/resident/register", async (req, res) => {
     const newResident = new ResidentModel({
       ...req.body,
       password: hashedPassword,
-      approvalStatus: "PENDING",
-      status: "Pending",
+      approvalStatus: "pending",
+      status: "pending",
     });
 
     await newResident.save();
@@ -231,6 +231,7 @@ AuthRouter.post("/resident/register", async (req, res) => {
         },
         "Registration successful"
       )
+      
     );
   } catch (error) {
     console.error("Resident registration error:", error);
